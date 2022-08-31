@@ -42,16 +42,17 @@ have the type `HttpHandler -> HttpHandler` and can be used to transform
 the pipeline.
 
 ```fsharp
-let someHttpHandler : HttpHandler =
+let someHttpHandler: HttpHandler =
     setStatusCode 200
     |> HttpHandler.text "Hello World"
 ```
 
-You may even compose two HttpHandler together using normal functional
-composition `>>` operator to create your own pipeline operators.
+You may even compose two `HttpHandler` pipeline aware operators together 
+using normal functional composition `>>` operator to create your own 
+pipeline aware operators.
 
 ```fsharp
-let someHttpOperator :  HttpHandler -> HttpHandler =
+let someHttpOperator: HttpHandler -> HttpHandler =
     HttpHandler.setStatusCode 200
     >> HttpHandler.text "Hello World"
 ```
