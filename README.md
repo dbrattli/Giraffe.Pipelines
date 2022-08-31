@@ -36,8 +36,25 @@ syntax.
 
 Pipelines are started using the normal Giraffe pipeline syntax e.g.
 `route "/ping"`. The pipeline is then transformed by piping the handler
-into operators from the `Giraffe.Pipelines` library e.g `route "/ping"
-|> HttpHandler.text "pong"`.
+into "operators" from the `HttpHandler` from the `Giraffe.Pipelines`
+library, e.g `route "/ping" |> HttpHandler.text "pong"`. These operators
+have the type `HttpHandler -> HttpHandler` and can be used to transform
+the pipeline.
+
+```fsharp
+let someHttpHandler : HttpHandler =
+    setStatusCode 200
+    |> HttpHandler.text "Hello World"
+```
+
+You may even compose two HttpHandler together using normal functional
+composition `>>` operator to create your own pipeline operators.
+
+```fsharp
+let someHttpOperator :  HttpHandler -> HttpHandler =
+    HttpHandler.setStatusCode 200
+    >> HttpHandler.text "Hello World"
+```
 
 Here is the minimal self-contained example:
 
