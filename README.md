@@ -1,5 +1,9 @@
 # Giraffe.Pipelines
 
+[![Build and Test](https://github.com/dbrattli/Giraffe.Pipelines/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/dbrattli/Giraffe.Pipelines/actions/workflows/build-and-test.yml)
+[![Nuget](https://img.shields.io/nuget/vpre/Giraffe.Pipelines)](https://www.nuget.org/packages/Giraffe.Pipelines/)
+
+
 Functional pipelining for the
 [Giraffe](https://github.com/giraffe-fsharp/Giraffe) ASP.NET Core micro
 web framework. This library enables you to write Giraffe HTTP handler
@@ -24,7 +28,7 @@ syntax.
 ## Installation
 
 ```console
-> dotnet add package Giraffe
+> dotnet add package Giraffe.Pipelines
 ```
 
 ## Usage
