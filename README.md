@@ -34,6 +34,8 @@ Pipelines are started using the normal Giraffe pipeline syntax e.g.
 into operators from the `Giraffe.Pipelines` library e.g `route "/ping"
 |> HttpHandler.text "pong"`.
 
+Here is the minimal self-contained example:
+
 ```fsharp
 open System
 open Microsoft.AspNetCore.Builder
