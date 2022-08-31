@@ -20,7 +20,7 @@ pipelines using normal F# pipes (`|>`) instead of Kleisli composition
   operator.
 
 Giraffe.Pipelines fixes all this by letting you use normal F# pipes
-(`|>`) and normal functional composition (`>=>`) in your Giraffe
+(`|>`) and normal functional composition (`>>`) in your Giraffe
 pipelines.
 
 Now you may enjoy your favorite F# library using a simpler and familiar
