@@ -343,5 +343,4 @@ module HttpHandler =
     /// <param name="responseObj">The object to send back to the client.</param>
     /// <param name="source">The previous HTTP handler to compose.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
-    let negotiate (responseObj : obj) (source: HttpHandler): HttpHandler =
-        source >=> negotiate responseObj
+    let negotiate (responseObj: obj) (source: HttpHandler) : HttpHandler = source >=> negotiate responseObj
