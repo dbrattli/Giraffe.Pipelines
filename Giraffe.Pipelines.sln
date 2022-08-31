@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Giraffe.Pipelines", "src\Giraffe.Pipelines.fsproj", "{19468778-4476-4DE9-B4B4-2E649BEBD4EF}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Giraffe.Tests", "tests\Giraffe.Tests.fsproj", "{07CAF277-AA90-428D-BE3B-B5ED678507E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{19468778-4476-4DE9-B4B4-2E649BEBD4EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19468778-4476-4DE9-B4B4-2E649BEBD4EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19468778-4476-4DE9-B4B4-2E649BEBD4EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19468778-4476-4DE9-B4B4-2E649BEBD4EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07CAF277-AA90-428D-BE3B-B5ED678507E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07CAF277-AA90-428D-BE3B-B5ED678507E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07CAF277-AA90-428D-BE3B-B5ED678507E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07CAF277-AA90-428D-BE3B-B5ED678507E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
