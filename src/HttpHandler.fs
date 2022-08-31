@@ -9,6 +9,19 @@ open Giraffe.ViewEngine.HtmlElements
 module HttpHandler =
     // Core
 
+    /// <summary>
+    /// The warbler function is a <see cref="HttpHandler"/> wrapper function which prevents a <see cref="HttpHandler"/> to be pre-evaluated at startup.
+    /// </summary>
+    /// <param name="f">A function which takes a HttpFunc * HttpContext tuple and returns a <see cref="HttpHandler"/> function.</param>
+    /// <param name="source">The previous HTTP handler to compose.</param>
+    /// <example>
+    /// <code>
+    /// warbler(fun _ -> someHttpHandler)
+    /// </code>
+    /// </example>
+    /// <returns>Returns a <see cref="HttpHandler"/> function.</returns>
+    let inline warbler f (source: HttpHandler) : HttpHandler = source >=> warbler f
+
     let inline handleContext (contextMap: HttpContext -> HttpFuncResult) (source: HttpHandler) : HttpHandler =
         source >=> handleContext contextMap
 
@@ -321,3 +334,14 @@ module HttpHandler =
         (source: HttpHandler)
         : HttpHandler =
         source >=> subRoutef path routeHandler
+
+    /// <summary>
+    /// Sends a response back to the client based on the request's Accept header.
+    ///
+    /// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
+    /// </summary>
+    /// <param name="responseObj">The object to send back to the client.</param>
+    /// <param name="source">The previous HTTP handler to compose.</param>
+    /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
+    let negotiate (responseObj : obj) (source: HttpHandler): HttpHandler =
+        source >=> negotiate responseObj

@@ -10,13 +10,14 @@ web framework. This library enables you to write Giraffe HTTP handler
 pipelines using normal F# pipes (`|>`) instead of Kleisli composition
 (`>=>`). Kleisli composition can be problematic for several reasons:
 
-- Kleisli composition is a complex abstraction that can be hard to
-  understand.
-- Having to use functional composition as the main abstraction for a
-  library is generally a bad idea.
-- Serveral libraries using Kleisli composition are incompatible with
-  each other. Thus you will get very confusing error messages.
-- The IDE support is not as good as with pipes.
+- Everyone in F# understands the `|>` operator, but most do not
+  understand `>=>`.
+- Having to use functional or Kleisli composition as the main
+  abstraction for a library is generally a bad idea.
+- Having serveral libraries using different `>=>` are incompatible with
+  each other. You will get very confusing error messages.
+- The IDE support and type hints are not as good as with the `|>`
+  operator.
 
 Giraffe.Pipelines fixes all this by letting you use normal F# pipes
 (`|>`) and normal functional composition (`>=>`) in your Giraffe
