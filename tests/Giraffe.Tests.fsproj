@@ -6,9 +6,9 @@
 
   <ItemGroup>
     <Compile Include="Helpers.fs" />
-    <Compile Include="PipelineTests.fs" />
     <Compile Include="HttpHandlerTests.fs" />
     <Compile Include="RoutingTests.fs" />
+    <Compile Include="ModelBindingTests.fs" />
   </ItemGroup>
 
   <ItemGroup>
