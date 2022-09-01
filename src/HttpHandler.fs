@@ -11,8 +11,7 @@ module HttpHandler =
 
     /// Subscribe the source handler. Adds the handler as the next handler to process after the source handler. Same as
     /// Giraffe compose i.e `>=>`.
-    let inline subscribe (source: HttpHandler) (handler: HttpHandler) : HttpHandler =
-        handler |> compose source
+    let inline subscribe (source: HttpHandler) (handler: HttpHandler) : HttpHandler = handler |> compose source
 
     /// <summary>
     /// The warbler function is a <see cref="HttpHandler"/> wrapper function which
