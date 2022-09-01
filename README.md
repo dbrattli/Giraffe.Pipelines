@@ -69,8 +69,8 @@ as you would construct any other handlers.
 let app =
     GET
     |> HttpHandler.choose
-        [ route "/" |> HttpHandler.text "Hello World"
-          route "/foo" |> HttpHandler.text "bar"
+        [ route "/"         |> HttpHandler.text "Hello World"
+          route "/foo"      |> HttpHandler.text "bar"
           setStatusCode 404 |> HttpHandler.text "Not found" ]
 ```
 
