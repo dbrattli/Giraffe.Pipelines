@@ -35,8 +35,13 @@ syntax.
 ## Usage
 
 Pipelines are started using the normal Giraffe pipeline syntax e.g.
-`route "/ping"`. The pipeline is then transformed by piping the initial
-handler into "operators" from the `HttpHandler` module, e.g:
+`route "/ping"`. You can think of the standard Giraffe HTTP handlers 
+as the create methods for a pipeline.
+
+The pipeline is then transformed by piping the initial
+handler into "operators" from the `HttpHandler` module. This is similar 
+to how you would use normal F# modules such as `Option` or `Result`, 
+e.g:
 
 ```fsharp
 let someHttpHandler: HttpHandler =
@@ -45,7 +50,7 @@ let someHttpHandler: HttpHandler =
 ```
 
 The provided `HttpHandler` operators have the type `HttpHandler ->
-HttpHandler` and is be used to transform the pipeline.
+HttpHandler` and is used to transform the pipeline.
 
 You may even compose two `HttpHandler` pipeline aware operators together
 using normal functional composition `>>` operator to create your own
