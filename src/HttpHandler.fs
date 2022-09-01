@@ -9,10 +9,17 @@ open Giraffe.ViewEngine.HtmlElements
 module HttpHandler =
     // Core handlers
 
+    /// Subscribe the source handler. Adds the handler as the next handler to process after the source handler. Same as
+    /// Giraffe compose i.e `>=>`.
+    let inline subscribe (source: HttpHandler) (handler: HttpHandler) : HttpHandler =
+        handler |> compose source
+
     /// <summary>
-    /// The warbler function is a <see cref="HttpHandler"/> wrapper function which prevents a <see cref="HttpHandler"/> to be pre-evaluated at startup.
+    /// The warbler function is a <see cref="HttpHandler"/> wrapper function which
+    /// prevents a <see cref="HttpHandler"/> to be pre-evaluated at startup.
     /// </summary>
-    /// <param name="f">A function which takes a HttpFunc * HttpContext tuple and returns a <see cref="HttpHandler"/> function.</param>
+    /// <param name="f">A function which takes a HttpFunc * HttpContext tuple and
+    /// returns a <see cref="HttpHandler"/> function.</param>
     /// <param name="source">The previous HTTP handler to compose.</param>
     /// <example>
     /// <code>

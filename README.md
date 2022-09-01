@@ -3,7 +3,6 @@
 [![Build and Test](https://github.com/dbrattli/Giraffe.Pipelines/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/dbrattli/Giraffe.Pipelines/actions/workflows/build-and-test.yml)
 [![Nuget](https://img.shields.io/nuget/vpre/Giraffe.Pipelines)](https://www.nuget.org/packages/Giraffe.Pipelines/)
 
-
 Functional pipelining for the
 [Giraffe](https://github.com/giraffe-fsharp/Giraffe) ASP.NET Core micro
 web framework. This library enables you to write Giraffe HTTP handler
@@ -35,12 +34,12 @@ syntax.
 ## Usage
 
 Pipelines are started using the normal Giraffe pipeline syntax e.g.
-`route "/ping"`. You can think of the standard Giraffe HTTP handlers 
+`route "/ping"`. You can think of the standard Giraffe HTTP handlers
 as the create methods for a pipeline.
 
 The pipeline is then transformed by piping the initial
-handler into "operators" from the `HttpHandler` module. This is similar 
-to how you would use normal F# modules such as `Option` or `Result`, 
+handler into "operators" from the `HttpHandler` module. This is similar
+to how you would use normal F# modules such as `Option` or `Result`,
 e.g:
 
 ```fsharp
@@ -113,4 +112,20 @@ let main _ =
         .Build()
         .Run()
     0
+```
+
+## Custom Operators
+
+You can create your own custom pipeable operators by having a `source`
+HTTP handler as the last argument of your handler, and subscribing it
+with a "normal" Giraffe HTTP handler function.
+
+```fsharp
+let customHandler (source: HttpHandler): HttpHandler =
+    fun (next: HttpFunc) (ctx: Microsoft.AspNetCore.Http.HttpContext) ->
+        task {
+            let! result = next ctx
+            return result
+        }
+    |> subscribe source
 ```
