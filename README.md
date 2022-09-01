@@ -35,11 +35,8 @@ syntax.
 ## Usage
 
 Pipelines are started using the normal Giraffe pipeline syntax e.g.
-`route "/ping"`. The pipeline is then transformed by piping the handler
-into "operators" from the `HttpHandler` from the `Giraffe.Pipelines`
-library, e.g `route "/ping" |> HttpHandler.text "pong"`. These operators
-have the type `HttpHandler -> HttpHandler` and can be used to transform
-the pipeline.
+`route "/ping"`. The pipeline is then transformed by piping the initial
+handler into "operators" from the `HttpHandler` module, e.g:
 
 ```fsharp
 let someHttpHandler: HttpHandler =
@@ -47,14 +44,30 @@ let someHttpHandler: HttpHandler =
     |> HttpHandler.text "Hello World"
 ```
 
-You may even compose two `HttpHandler` pipeline aware operators together 
-using normal functional composition `>>` operator to create your own 
+The provided `HttpHandler` operators have the type `HttpHandler ->
+HttpHandler` and is be used to transform the pipeline.
+
+You may even compose two `HttpHandler` pipeline aware operators together
+using normal functional composition `>>` operator to create your own
 pipeline aware operators.
 
 ```fsharp
 let someHttpOperator: HttpHandler -> HttpHandler =
     HttpHandler.setStatusCode 200
     >> HttpHandler.text "Hello World"
+```
+
+Note that HTTP handlers such as `choose` starts new pipelines in the
+supplied list of handlers so you construct these handlers the same way
+as you would construct any other handlers.
+
+```fsharp
+let app =
+    GET
+    |> HttpHandler.choose
+        [ route "/" |> HttpHandler.text "Hello World"
+          route "/foo" |> HttpHandler.text "bar"
+          setStatusCode 404 |> HttpHandler.text "Not found" ]
 ```
 
 Here is the minimal self-contained example:
