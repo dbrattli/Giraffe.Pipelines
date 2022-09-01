@@ -7,7 +7,7 @@ open Giraffe.ViewEngine.HtmlElements
 
 [<RequireQualifiedAccess>]
 module HttpHandler =
-    // Core
+    // Core handlers
 
     /// <summary>
     /// The warbler function is a <see cref="HttpHandler"/> wrapper function which prevents a <see cref="HttpHandler"/> to be pre-evaluated at startup.
@@ -30,6 +30,7 @@ module HttpHandler =
     /// <returns>A Giraffe <see cref="HttpHandler"/> function which can be composed into a bigger web application.</returns>
     let inline handleContext (contextMap: HttpContext -> HttpFuncResult) (source: HttpHandler) : HttpHandler =
         source >=> handleContext contextMap
+
     /// <summary>
     /// Iterates through a list of <see cref="HttpHandler"/> functions and returns the result of the first <see cref="HttpHandler"/> of which the outcome is Some HttpContext.
     /// Please mind that all <see cref="HttpHandler"/> functions will get pre-evaluated at runtime by applying the next (HttpFunc) parameter to each handler.
@@ -37,7 +38,6 @@ module HttpHandler =
     /// <param name="handlers"></param>
     /// <param name="source">The previous HTTP handler to compose.</param>
     /// <returns>A <see cref="HttpFunc"/>.</returns>
-
     let inline choose handlers (source: HttpHandler) : HttpHandler = source >=> choose handlers
 
     let inline GET (source: HttpHandler) : HttpHandler = source >=> GET
@@ -273,7 +273,7 @@ module HttpHandler =
     /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
     let inline htmlView (htmlView: XmlNode) (source: HttpHandler) : HttpHandler = source >=> Core.htmlView htmlView
 
-    // Routing
+    // Routing handlers
 
     /// <summary>
     /// Filters an incoming HTTP request based on the port.
