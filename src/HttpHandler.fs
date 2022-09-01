@@ -526,4 +526,3 @@ module HttpHandlerExtensions =
     /// Subscribe the source handler. Adds the handler as the next handler to process after the source handler. Same as
     /// Giraffe compose i.e `>=>`.
     let inline subscribe (source: HttpHandler) (handler: HttpHandler) : HttpHandler = handler |> compose source
-

@@ -14,29 +14,25 @@ open Giraffe
 
 [<CLIMutable>]
 type ModelWithOption =
-    {
-        OptionalInt     : int option
-        OptionalString  : string option
-    }
+    { OptionalInt: int option
+      OptionalString: string option }
 
 [<CLIMutable>]
 type ModelWithNullable =
-    {
-        NullableInt      : Nullable<int>
-        NullableDateTime : Nullable<DateTime>
-    }
+    { NullableInt: Nullable<int>
+      NullableDateTime: Nullable<DateTime> }
 
 [<CLIMutable>]
 type Customer =
-    {
-        Name          : string
-        IsVip         : bool
-        BirthDate     : DateTime
-        Balance       : float
-        LoyaltyPoints : int
-    }
+    { Name: string
+      IsVip: bool
+      BirthDate: DateTime
+      Balance: float
+      LoyaltyPoints: int }
+
     override this.ToString() =
-        sprintf "Name: %s, IsVip: %b, BirthDate: %s, Balance: %.2f, LoyaltyPoints: %i"
+        sprintf
+            "Name: %s, IsVip: %b, BirthDate: %s, Balance: %.2f, LoyaltyPoints: %i"
             this.Name
             this.IsVip
             (this.BirthDate.ToString("yyyy-MM-dd"))
@@ -48,62 +44,54 @@ type Sex =
     | Female
 
 [<CLIMutable>]
-type Child =
-    {
-        Name : string
-        Age  : int
-    }
+type Child = { Name: string; Age: int }
 
 [<CLIMutable>]
 type Model =
-    {
-        Id         : Guid
-        FirstName  : string
-        MiddleName : string option
-        LastName   : string
-        Sex        : Sex
-        BirthDate  : DateTime
-        Nicknames  : string list option
-        Children   : Child[]
-    }
+    { Id: Guid
+      FirstName: string
+      MiddleName: string option
+      LastName: string
+      Sex: Sex
+      BirthDate: DateTime
+      Nicknames: string list option
+      Children: Child[] }
 
 [<CLIMutable>]
-type Model2 = {
-    SearchTerms : string[]
-}
+type Model2 = { SearchTerms: string[] }
 
 [<CLIMutable>]
 type QueryModel =
-    {
-        FirstName  : string
-        LastName   : string
-        Sex        : Sex
-        Numbers    : int list option
-    }
+    { FirstName: string
+      LastName: string
+      Sex: Sex
+      Numbers: int list option }
+
     override this.ToString() =
-        let formatNicknames() =
+        let formatNicknames () =
             match this.Numbers with
-            | None       -> "--"
+            | None -> "--"
             | Some items ->
                 items
-                |> List.fold (
-                    fun state i ->
-                        if String.IsNullOrEmpty state
-                        then i.ToString()
-                        else sprintf "%s, %i" state i
-                    ) ""
+                |> List.fold
+                    (fun state i ->
+                        if String.IsNullOrEmpty state then
+                            i.ToString()
+                        else
+                            sprintf "%s, %i" state i)
+                    ""
 
-        sprintf "Name: %s %s; Sex: %s; Numbers: %s"
+        sprintf
+            "Name: %s %s; Sex: %s; Numbers: %s"
             this.FirstName
             this.LastName
             (this.Sex.ToString())
-            (formatNicknames())
+            (formatNicknames ())
 
 [<CLIMutable>]
-type CompositeModel = {
-    FirstChild: Child
-    SecondChild: Child option
-}
+type CompositeModel =
+    { FirstChild: Child
+      SecondChild: Child option }
 
 // ---------------------------------
 // ModelParser.tryParse Tests
@@ -111,264 +99,266 @@ type CompositeModel = {
 
 [<Fact>]
 let ``ModelParser.tryParse with model which has primitive array`` () =
-    let modelData =
-        dict [
-            "SearchTerms" , StringValues [| "a"; "abc"; "abcdef" |]
-        ]
-    let expected =
-        {
-            SearchTerms = [| "a"; "abc"; "abcdef" |]
-        }
+    let modelData = dict [ "SearchTerms", StringValues [| "a"; "abc"; "abcdef" |] ]
+    let expected = { SearchTerms = [| "a"; "abc"; "abcdef" |] }
     let culture = None
 
     let result = ModelParser.tryParse<Model2> culture modelData
+
     match result with
-    | Ok model  -> Assert.Equal(expected, model)
+    | Ok model -> Assert.Equal(expected, model)
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"               , StringValues (id.ToString())
-            "FirstName"        , StringValues "Susan"
-            "MiddleName"       , StringValues "Elisabeth"
-            "LastName"         , StringValues "Doe"
-            "Sex"              , StringValues "Female"
-            "BirthDate"        , StringValues "1986-12-29"
-            "Nicknames"        , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
 
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok model  -> Assert.Equal(expected, model)
+    | Ok model -> Assert.Equal(expected, model)
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with model data without optional parameters`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = None
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = None
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = None
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = None
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok model  -> Assert.Equal(expected, model)
+    | Ok model -> Assert.Equal(expected, model)
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but mixed casing`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "id"        , StringValues (id.ToString())
-            "firstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "lastname"  , StringValues "Doe"
-            "Sex"       , StringValues "female"
-            "BirthDate" , StringValues "1986-12-29"
-            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].name" , StringValues "Ali"
-            "children[1].Age"  , StringValues "22"
-            "children[2].Name" , StringValues "Gholi"
-            "children[2].age"  , StringValues "44"
-        ]
+        dict
+            [ "id", StringValues(id.ToString())
+              "firstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "lastname", StringValues "Doe"
+              "Sex", StringValues "female"
+              "BirthDate", StringValues "1986-12-29"
+              "NickNames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].name", StringValues "Ali"
+              "children[1].Age", StringValues "22"
+              "children[2].Name", StringValues "Gholi"
+              "children[2].age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok model  -> Assert.Equal(expected, model)
+    | Ok model -> Assert.Equal(expected, model)
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but with different order for array of child`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "id"        , StringValues (id.ToString())
-            "firstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "lastname"  , StringValues "Doe"
-            "Sex"       , StringValues "female"
-            "BirthDate" , StringValues "1986-12-29"
-            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Age"  , StringValues "44"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[0].Age"  , StringValues "32"
-        ]
+        dict
+            [ "id", StringValues(id.ToString())
+              "firstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "lastname", StringValues "Doe"
+              "Sex", StringValues "female"
+              "BirthDate", StringValues "1986-12-29"
+              "NickNames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[2].Name", StringValues "Gholi"
+              "Children[0].Name", StringValues "Hamed"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Age", StringValues "44"
+              "Children[1].Name", StringValues "Ali"
+              "Children[0].Age", StringValues "32" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok model  -> Assert.Equal(expected, model)
+    | Ok model -> Assert.Equal(expected, model)
     | Error err -> assertFailf "Model didn't bind successfully: %s." err
 
 [<Fact>]
 let ``ModelParser.tryParse with incomplete model data`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[2].Age", StringValues "44" ]
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Ok _ -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Missing value for required property Id.", err)
 
 [<Fact>]
 let ``ModelParser.tryParse with incomplete model data and different order for array of child`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[2].Age"  , StringValues "44"
-            "Children[0].Name" , StringValues "Hamed"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[2].Age", StringValues "44"
+              "Children[0].Name", StringValues "Hamed" ]
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Ok _ -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Missing value for required property Id.", err)
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong union case`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "wrong"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "wrong"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "44" ]
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
-    | Error err -> Assert.Equal("The value 'wrong' is not a valid case for type Giraffe.Tests.ModelBindingTests+Sex.", err)
+    | Ok _ -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Error err ->
+        Assert.Equal("The value 'wrong' is not a valid case for type Giraffe.Tests.ModelBindingTests+Sex.", err)
 
 [<Fact>]
 let ``ModelParser.tryParse with complete model data but wrong data`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "wrong"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "wrongAge"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "wrongAge"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "wrongAge"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "wrong"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "wrongAge"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "wrongAge"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "wrongAge" ]
+
     let culture = None
     let result = ModelParser.tryParse<Model> culture modelData
+
     match result with
-    | Ok _      -> assertFail "Model had incomplete data and should have not bound successfully."
+    | Ok _ -> assertFail "Model had incomplete data and should have not bound successfully."
     | Error err -> Assert.Equal("Could not parse value 'wrong' to type System.DateTime.", err)
 
 // ---------------------------------
@@ -378,37 +368,36 @@ let ``ModelParser.tryParse with complete model data but wrong data`` () =
 [<Fact>]
 let ``ModelParser.parse with complete model data`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -416,35 +405,34 @@ let ``ModelParser.parse with complete model data`` () =
 [<Fact>]
 let ``ModelParser.parse with model data without optional parameters`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "Id"        , StringValues (id.ToString())
-            "FirstName" , StringValues "Susan"
-            "LastName"  , StringValues "Doe"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "Id", StringValues(id.ToString())
+              "FirstName", StringValues "Susan"
+              "LastName", StringValues "Doe"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = None
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = None
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = None
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = None
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -452,37 +440,36 @@ let ``ModelParser.parse with model data without optional parameters`` () =
 [<Fact>]
 let ``ModelParser.parse with complete model data but mixed casing`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "id"        , StringValues (id.ToString())
-            "firstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "lastname"  , StringValues "Doe"
-            "Sex"       , StringValues "female"
-            "BirthDate" , StringValues "1986-12-29"
-            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "32"
-            "Children[1].name" , StringValues "Ali"
-            "children[1].Age"  , StringValues "22"
-            "children[2].Name" , StringValues "Gholi"
-            "children[2].age"  , StringValues "44"
-        ]
+        dict
+            [ "id", StringValues(id.ToString())
+              "firstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "lastname", StringValues "Doe"
+              "Sex", StringValues "female"
+              "BirthDate", StringValues "1986-12-29"
+              "NickNames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "32"
+              "Children[1].name", StringValues "Ali"
+              "children[1].Age", StringValues "22"
+              "children[2].Name", StringValues "Gholi"
+              "children[2].age", StringValues "44" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -490,37 +477,36 @@ let ``ModelParser.parse with complete model data but mixed casing`` () =
 [<Fact>]
 let ``ModelParser.parse with complete model data but with different order for array of child`` () =
     let id = Guid.NewGuid()
+
     let modelData =
-        dict [
-            "id"        , StringValues (id.ToString())
-            "firstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "lastname"  , StringValues "Doe"
-            "Sex"       , StringValues "female"
-            "BirthDate" , StringValues "1986-12-29"
-            "NickNames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Age"  , StringValues "44"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[0].Age"  , StringValues "32"
-        ]
+        dict
+            [ "id", StringValues(id.ToString())
+              "firstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "lastname", StringValues "Doe"
+              "Sex", StringValues "female"
+              "BirthDate", StringValues "1986-12-29"
+              "NickNames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[2].Name", StringValues "Gholi"
+              "Children[0].Name", StringValues "Hamed"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Age", StringValues "44"
+              "Children[1].Name", StringValues "Ali"
+              "Children[0].Age", StringValues "32" ]
+
     let expected =
-        {
-            Id         = id
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = "Doe"
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 32 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 44 }
-            |]
-        }
+        { Id = id
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = "Doe"
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 32 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -528,31 +514,28 @@ let ``ModelParser.parse with complete model data but with different order for ar
 [<Fact>]
 let ``ModelParser.parse with incomplete model data`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[2].Age", StringValues "44" ]
 
     let expected =
-        {
-            Id         = Guid.Empty
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = null
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 0 }
-                Unchecked.defaultof<_>
-                { Name = null; Age = 44 }
-            |]
-        }
+        { Id = Guid.Empty
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = null
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 0 }
+               Unchecked.defaultof<_>
+               { Name = null; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -560,31 +543,28 @@ let ``ModelParser.parse with incomplete model data`` () =
 [<Fact>]
 let ``ModelParser.parse with incomplete model data and with different order for array of child`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "Female"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[2].Age"  , StringValues "44"
-            "Children[0].Name" , StringValues "Hamed"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "Female"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[2].Age", StringValues "44"
+              "Children[0].Name", StringValues "Hamed" ]
 
     let expected =
-        {
-            Id         = Guid.Empty
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = null
-            Sex        = Female
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 0 }
-                Unchecked.defaultof<_>
-                { Name = null; Age = 44 }
-            |]
-        }
+        { Id = Guid.Empty
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = null
+          Sex = Female
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 0 }
+               Unchecked.defaultof<_>
+               { Name = null; Age = 44 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected, result)
@@ -592,31 +572,27 @@ let ``ModelParser.parse with incomplete model data and with different order for 
 [<Fact>]
 let ``ModelParser.parse with incomplete model data and wrong union case`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "wrong"
-            "BirthDate" , StringValues "1986-12-29"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[2].Age"  , StringValues "44"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "wrong"
+              "BirthDate", StringValues "1986-12-29"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[2].Age", StringValues "44" ]
 
     let expected =
-        {
-            Id         = Guid.Empty
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = null
-            Sex        = Unchecked.defaultof<Sex>
-            BirthDate  = DateTime(1986, 12, 29)
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 0 }
-                Unchecked.defaultof<_>
-                { Name = null; Age = 44 }
-            |]
-        }
+        { Id = Guid.Empty
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = null
+          Sex = Unchecked.defaultof<Sex>
+          BirthDate = DateTime(1986, 12, 29)
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 0 }
+               Unchecked.defaultof<_>
+               { Name = null; Age = 44 } |] }
 
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
@@ -633,34 +609,32 @@ let ``ModelParser.parse with incomplete model data and wrong union case`` () =
 [<Fact>]
 let ``ModelParser.parse with complete model data but wrong data`` () =
     let modelData =
-        dict [
-            "FirstName" , StringValues "Susan"
-            "MiddleName", StringValues "Elisabeth"
-            "Sex"       , StringValues "wrong"
-            "BirthDate" , StringValues "wrong"
-            "Nicknames" , StringValues [| "Susi"; "Eli"; "Liz" |]
-            "Children[0].Name" , StringValues "Hamed"
-            "Children[0].Age"  , StringValues "wrongAge"
-            "Children[1].Name" , StringValues "Ali"
-            "Children[1].Age"  , StringValues "22"
-            "Children[2].Name" , StringValues "Gholi"
-            "Children[2].Age"  , StringValues "wrongAge"
-        ]
+        dict
+            [ "FirstName", StringValues "Susan"
+              "MiddleName", StringValues "Elisabeth"
+              "Sex", StringValues "wrong"
+              "BirthDate", StringValues "wrong"
+              "Nicknames", StringValues [| "Susi"; "Eli"; "Liz" |]
+              "Children[0].Name", StringValues "Hamed"
+              "Children[0].Age", StringValues "wrongAge"
+              "Children[1].Name", StringValues "Ali"
+              "Children[1].Age", StringValues "22"
+              "Children[2].Name", StringValues "Gholi"
+              "Children[2].Age", StringValues "wrongAge" ]
+
     let expected =
-        {
-            Id         = Guid.Empty
-            FirstName  = "Susan"
-            MiddleName = Some "Elisabeth"
-            LastName   = null
-            Sex        = Unchecked.defaultof<Sex>
-            BirthDate  = Unchecked.defaultof<DateTime>
-            Nicknames  = Some [ "Susi"; "Eli"; "Liz" ]
-            Children   = [|
-                { Name = "Hamed"; Age = 0 }
-                { Name = "Ali";   Age = 22 }
-                { Name = "Gholi"; Age = 0 }
-            |]
-        }
+        { Id = Guid.Empty
+          FirstName = "Susan"
+          MiddleName = Some "Elisabeth"
+          LastName = null
+          Sex = Unchecked.defaultof<Sex>
+          BirthDate = Unchecked.defaultof<DateTime>
+          Nicknames = Some [ "Susi"; "Eli"; "Liz" ]
+          Children =
+            [| { Name = "Hamed"; Age = 0 }
+               { Name = "Ali"; Age = 22 }
+               { Name = "Gholi"; Age = 0 } |] }
+
     let culture = None
     let result = ModelParser.parse<Model> culture modelData
     Assert.Equal(expected.Id, result.Id)
@@ -675,15 +649,14 @@ let ``ModelParser.parse with complete model data but wrong data`` () =
 [<Fact>]
 let ``ModelParser.parse with composite model and SecondChild missing data`` () =
     let modelData =
-        dict [
-            "FirstChild.Name"  , StringValues "FirstName"
-            "FirstChild.Age"   , StringValues "2"
-        ]
+        dict
+            [ "FirstChild.Name", StringValues "FirstName"
+              "FirstChild.Age", StringValues "2" ]
+
     let expected =
-        {
-            FirstChild = { Name = "FirstName"; Age = 2}
-            SecondChild = None
-        }
+        { FirstChild = { Name = "FirstName"; Age = 2 }
+          SecondChild = None }
+
     let culture = None
     let result = ModelParser.parse<CompositeModel> culture modelData
     Assert.Equal(expected, result)
@@ -691,17 +664,16 @@ let ``ModelParser.parse with composite model and SecondChild missing data`` () =
 [<Fact>]
 let ``ModelParser.parse with complete composite model data`` () =
     let modelData =
-        dict [
-            "FirstChild.Name"  , StringValues "FirstName"
-            "FirstChild.Age"   , StringValues "2"
-            "SecondChild.Name" , StringValues "SecondName"
-            "SecondChild.Age"  , StringValues "10"
-        ]
+        dict
+            [ "FirstChild.Name", StringValues "FirstName"
+              "FirstChild.Age", StringValues "2"
+              "SecondChild.Name", StringValues "SecondName"
+              "SecondChild.Age", StringValues "10" ]
+
     let expected =
-        {
-            FirstChild = { Name = "FirstName"; Age = 2}
-            SecondChild = Some { Name = "SecondName"; Age = 10}
-        }
+        { FirstChild = { Name = "FirstName"; Age = 2 }
+          SecondChild = Some { Name = "SecondName"; Age = 10 } }
+
     let culture = None
     let result = ModelParser.parse<CompositeModel> culture modelData
     Assert.Equal(expected, result)
@@ -716,25 +688,32 @@ let ``tryBindQuery with complete data and list items with []`` () =
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = HttpHandler.tryBindQuery<QueryModel> parsingErrorHandler None
+
     let app =
-        GET |> HttpHandler.choose [
-            route "/query" |> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 |> HttpHandler.text "Not found"
-        ]
+        GET
+        |> HttpHandler.choose
+            [ route "/query" |> bindQuery (fun m -> text (m.ToString()))
+              setStatusCode 404 |> HttpHandler.text "Not found" ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: 5, 3, 2"
-    let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers[]=5&numbers[]=3&numbers[]=2"
+
+    let queryStr =
+        "?firstName=John&lastName=Doe&sex=male&numbers[]=5&numbers[]=3&numbers[]=2"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -744,25 +723,30 @@ let ``tryBindQuery with complete data and list items without []`` () =
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = HttpHandler.tryBindQuery<QueryModel> parsingErrorHandler None
+
     let app =
-        GET |> HttpHandler.choose [
-            route "/query" |> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 |> HttpHandler.text "Not found"
-        ]
+        GET
+        |> HttpHandler.choose
+            [ route "/query" |> bindQuery (fun m -> text (m.ToString()))
+              setStatusCode 404 |> HttpHandler.text "Not found" ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: 7, 9, 0"
     let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers=7&numbers=9&numbers=0"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -772,25 +756,30 @@ let ``tryBindQuery without optional data`` () =
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = HttpHandler.tryBindQuery<QueryModel> parsingErrorHandler None
+
     let app =
-        GET |> HttpHandler.choose [
-            route "/query" |> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 |> HttpHandler.text "Not found"
-        ]
+        GET
+        |> HttpHandler.choose
+            [ route "/query" |> bindQuery (fun m -> text (m.ToString()))
+              setStatusCode 404 |> HttpHandler.text "Not found" ]
 
     let expected = "Name: John Doe; Sex: Male; Numbers: --"
     let queryStr = "?firstName=John&lastName=Doe&sex=male"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -800,25 +789,30 @@ let ``tryBindQuery with incomplete data`` () =
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = HttpHandler.tryBindQuery<QueryModel> parsingErrorHandler None
+
     let app =
-        GET |> HttpHandler.choose [
-            route "/query" |> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 |> HttpHandler.text "Not found"
-        ]
+        GET
+        |> HttpHandler.choose
+            [ route "/query" |> bindQuery (fun m -> text (m.ToString()))
+              setStatusCode 404 |> HttpHandler.text "Not found" ]
 
     let expected = "Missing value for required property FirstName."
     let queryStr = "?lastName=Doe&sex=male"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -828,25 +822,32 @@ let ``tryBindQuery with complete data but baldy formated list items`` () =
 
     let parsingErrorHandler err = RequestErrors.badRequest (text err)
     let bindQuery = HttpHandler.tryBindQuery<QueryModel> parsingErrorHandler None
+
     let app =
-        GET |> HttpHandler.choose [
-            route "/query" |> bindQuery (fun m -> text(m.ToString()))
-            setStatusCode 404 |> HttpHandler.text "Not found"
-        ]
+        GET
+        |> HttpHandler.choose
+            [ route "/query" |> bindQuery (fun m -> text (m.ToString()))
+              setStatusCode 404 |> HttpHandler.text "Not found" ]
 
     let expected = "Could not parse value 'wrong' to type System.Int32."
-    let queryStr = "?firstName=John&lastName=Doe&sex=male&numbers[]=7&numbers[]=wrong&numbers[]=0"
+
+    let queryStr =
+        "?firstName=John&lastName=Doe&sex=male&numbers[]=7&numbers[]=wrong&numbers[]=0"
 
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
+
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -860,13 +861,16 @@ let ``BindJsonAsync test`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
-    let outputCustomer (c : Customer) = text (c.ToString())
+    let outputCustomer (c: Customer) = text (c.ToString())
+
     let app =
         POST
         |> HttpHandler.route "/json"
         |> HttpHandler.bindJson<Customer> outputCustomer
 
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+    let postContent =
+        "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -877,18 +881,19 @@ let ``BindJsonAsync test`` (settings) =
     headers.Add("Content-Type", StringValues("application/json"))
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/json")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/json")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -897,13 +902,14 @@ let ``BindXmlAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        POST
-        |> HttpHandler.route "/xml"
-        |> HttpHandler.bindXml<Customer> outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
 
-    let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
+    let app =
+        POST |> HttpHandler.route "/xml" |> HttpHandler.bindXml<Customer> outputCustomer
+
+    let postContent =
+        "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -914,18 +920,19 @@ let ``BindXmlAsync test`` () =
     headers.Add("Content-Type", StringValues("application/xml"))
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/xml")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/xml")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -933,7 +940,8 @@ let ``BindXmlAsync test`` () =
 let ``BindFormAsync test`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let outputCustomer (c : Customer) = text (c.ToString())
+    let outputCustomer (c: Customer) = text (c.ToString())
+
     let app =
         POST
         |> HttpHandler.route "/form"
@@ -942,28 +950,33 @@ let ``BindFormAsync test`` () =
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues("application/x-www-form-urlencoded"))
     ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
+
     let form =
-        dict [
-            "Name", StringValues("John Doe")
-            "IsVip", StringValues("true")
-            "BirthDate", StringValues("1990-04-20")
-            "Balance", StringValues("150000.5")
-            "LoyaltyPoints", StringValues("137")
-        ] |> Dictionary
-    let taskColl = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+        dict
+            [ "Name", StringValues("John Doe")
+              "IsVip", StringValues("true")
+              "BirthDate", StringValues("1990-04-20")
+              "Balance", StringValues("150000.5")
+              "LoyaltyPoints", StringValues("137") ]
+        |> Dictionary
+
+    let taskColl =
+        System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+
     ctx.Request.ReadFormAsync().ReturnsForAnyArgs(taskColl) |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/form")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/form")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -972,27 +985,33 @@ let ``BindQueryString test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler source =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
+        fun (next: HttpFunc) (ctx: HttpContext) ->
             let model = ctx.BindQueryString<Customer>()
             text (model.ToString()) next ctx
         |> subscribe source
 
     let app = GET |> HttpHandler.route "/query" |> queryHandler
 
-    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+    let queryStr =
+        "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1001,27 +1020,35 @@ let ``BindQueryString culture specific test`` () =
     let ctx = Substitute.For<HttpContext>()
 
     let queryHandler (source: HttpHandler) =
-        fun (next : HttpFunc) (ctx : HttpContext) ->
-            let model = ctx.BindQueryString<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            let model =
+                ctx.BindQueryString<Customer>(CultureInfo.CreateSpecificCulture("en-GB"))
+
             text (model.ToString()) next ctx
         |> subscribe source
 
     let app = GET |> HttpHandler.route "/query" |> queryHandler
 
-    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=12/04/1998 12:34:56&Balance=150000.5&LoyaltyPoints=137"
+    let queryStr =
+        "?Name=John%20Doe&IsVip=true&BirthDate=12/04/1998 12:34:56&Balance=150000.5&LoyaltyPoints=137"
+
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/query")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/query")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1998-04-12, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1998-04-12, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1029,7 +1056,7 @@ let ``BindQueryString culture specific test`` () =
 let ``BindQueryString with option property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome source =
-            fun next (ctx : HttpContext) ->
+            fun next (ctx: HttpContext) ->
                 task {
                     let model = ctx.BindQueryString<ModelWithOption>()
                     Assert.Equal(expected, model)
@@ -1041,24 +1068,41 @@ let ``BindQueryString with option property test`` () =
 
         let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+        |> ignore
+
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs(PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
         app (Some >> Task.FromResult) ctx
 
     task {
-        let! _ = testRoute "?OptionalInt=1&OptionalString=Hi" { OptionalInt = Some 1; OptionalString = Some "Hi" }
-        let! _ = testRoute "?" { OptionalInt = None; OptionalString = None }
-        return!  testRoute "?OptionalInt=&OptionalString=" { OptionalInt = None; OptionalString = Some "" }
+        let! _ =
+            testRoute
+                "?OptionalInt=1&OptionalString=Hi"
+                { OptionalInt = Some 1
+                  OptionalString = Some "Hi" }
+
+        let! _ =
+            testRoute
+                "?"
+                { OptionalInt = None
+                  OptionalString = None }
+
+        return!
+            testRoute
+                "?OptionalInt=&OptionalString="
+                { OptionalInt = None
+                  OptionalString = Some "" }
     }
 
 [<Fact>]
 let ``BindQueryString with nullable property test`` () =
     let testRoute queryStr expected =
         let queryHandlerWithSome source =
-            fun next (ctx : HttpContext) ->
+            fun next (ctx: HttpContext) ->
                 task {
                     let model = ctx.BindQueryString<ModelWithNullable>()
                     Assert.Equal(expected, model)
@@ -1070,17 +1114,34 @@ let ``BindQueryString with nullable property test`` () =
 
         let ctx = Substitute.For<HttpContext>()
         let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+        ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+        |> ignore
+
         ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-        ctx.Request.Path.ReturnsForAnyArgs (PathString("/")) |> ignore
+        ctx.Request.Path.ReturnsForAnyArgs(PathString("/")) |> ignore
         ctx.Response.Body <- new MemoryStream()
 
         app (Some >> Task.FromResult) ctx
 
     task {
-        let! _ = testRoute "?NullableInt=1&NullableDateTime=2017-09-01" { NullableInt = Nullable<_>(1); NullableDateTime = Nullable<_>(DateTime(2017,09,01)) }
-        let! _ = testRoute "?" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
-        return!  testRoute "?NullableInt=&NullableDateTime=" { NullableInt = Nullable<_>(); NullableDateTime = Nullable<_>() }
+        let! _ =
+            testRoute
+                "?NullableInt=1&NullableDateTime=2017-09-01"
+                { NullableInt = Nullable<_>(1)
+                  NullableDateTime = Nullable<_>(DateTime(2017, 09, 01)) }
+
+        let! _ =
+            testRoute
+                "?"
+                { NullableInt = Nullable<_>()
+                  NullableDateTime = Nullable<_>() }
+
+        return!
+            testRoute
+                "?NullableInt=&NullableDateTime="
+                { NullableInt = Nullable<_>()
+                  NullableDateTime = Nullable<_>() }
     }
 
 [<Theory>]
@@ -1089,13 +1150,14 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
-    let postContent = "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
+
+    let postContent =
+        "{ \"name\": \"John Doe\", \"isVip\": true, \"birthDate\": \"1990-04-20\", \"balance\": 150000.5, \"loyaltyPoints\": 137 }"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1107,18 +1169,19 @@ let ``BindModelAsync with JSON content returns correct result`` (settings) =
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1128,13 +1191,14 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
     let contentType = "application/json"
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+
+    let postContent =
+        "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1146,18 +1210,19 @@ let ``BindModelAsync with JSON content that uses custom serialization settings r
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1166,13 +1231,14 @@ let ``BindModelAsync with XML content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
     mockXml ctx
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
     let contentType = "application/xml"
-    let postContent = "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
+
+    let postContent =
+        "<Customer><Name>John Doe</Name><IsVip>true</IsVip><BirthDate>1990-04-20</BirthDate><Balance>150000.5</Balance><LoyaltyPoints>137</LoyaltyPoints></Customer>"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1184,18 +1250,19 @@ let ``BindModelAsync with XML content returns correct result`` () =
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1203,38 +1270,41 @@ let ``BindModelAsync with XML content returns correct result`` () =
 let ``BindModelAsync with FORM content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues(contentType))
     ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
+
     let form =
-        dict [
-            "Name", StringValues("John Doe")
-            "IsVip", StringValues("true")
-            "BirthDate", StringValues("1990-04-20")
-            "Balance", StringValues("150000.5")
-            "LoyaltyPoints", StringValues("137")
-        ] |> Dictionary
-    let taskColl = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+        dict
+            [ "Name", StringValues("John Doe")
+              "IsVip", StringValues("true")
+              "BirthDate", StringValues("1990-04-20")
+              "Balance", StringValues("150000.5")
+              "LoyaltyPoints", StringValues("137") ]
+        |> Dictionary
+
+    let taskColl =
+        System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+
     ctx.Request.ReadFormAsync().ReturnsForAnyArgs(taskColl) |> ignore
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1242,39 +1312,44 @@ let ``BindModelAsync with FORM content returns correct result`` () =
 let ``BindModelAsync with culture aware form content returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let outputCustomer (c : Customer) = text (c.ToString())
+    let outputCustomer (c: Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")
+
     let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> (Some english) outputCustomer
+        route "/auto" |> HttpHandler.bindModel<Customer> (Some english) outputCustomer
 
     let contentType = "application/x-www-form-urlencoded"
     let headers = HeaderDictionary()
     headers.Add("Content-Type", StringValues(contentType))
     ctx.Request.HasFormContentType.ReturnsForAnyArgs true |> ignore
+
     let form =
-        dict [
-            "Name", StringValues("John Doe")
-            "IsVip", StringValues("true")
-            "BirthDate", StringValues("04/01/2015 05:45:00")
-            "Balance", StringValues("150000.5")
-            "LoyaltyPoints", StringValues("137")
-        ] |> Dictionary
-    let taskColl = System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+        dict
+            [ "Name", StringValues("John Doe")
+              "IsVip", StringValues("true")
+              "BirthDate", StringValues("04/01/2015 05:45:00")
+              "Balance", StringValues("150000.5")
+              "LoyaltyPoints", StringValues("137") ]
+        |> Dictionary
+
+    let taskColl =
+        System.Threading.Tasks.Task.FromResult(FormCollection(form) :> IFormCollection)
+
     ctx.Request.ReadFormAsync().ReturnsForAnyArgs(taskColl) |> ignore
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 2015-01-04, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 2015-01-04, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1284,13 +1359,14 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
     let ctx = Substitute.For<HttpContext>()
     mockJson ctx settings
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
     let contentType = "application/json; charset=utf-8"
-    let postContent = "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+
+    let postContent =
+        "{ \"Name\": \"John Doe\", \"IsVip\": true, \"BirthDate\": \"1990-04-20\", \"Balance\": 150000.5, \"LoyaltyPoints\": 137 }"
+
     let stream = new MemoryStream()
     let writer = new StreamWriter(stream, Encoding.UTF8)
     writer.Write postContent
@@ -1302,18 +1378,19 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
     headers.Add("Content-Length", StringValues(stream.Length.ToString()))
     ctx.Request.ContentType.ReturnsForAnyArgs contentType |> ignore
     ctx.Request.Method.ReturnsForAnyArgs "POST" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Request.Headers.ReturnsForAnyArgs(headers) |> ignore
     ctx.Response.Body <- new MemoryStream()
-    ctx.Request.Body  <- stream
+    ctx.Request.Body <- stream
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1321,25 +1398,29 @@ let ``BindModelAsync with JSON content and a specific charset returns correct re
 let ``BindModelAsync during HTTP GET request with query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let outputCustomer (c : Customer) = text (c.ToString())
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> None outputCustomer
+    let outputCustomer (c: Customer) = text (c.ToString())
+    let app = route "/auto" |> HttpHandler.bindModel<Customer> None outputCustomer
 
-    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+    let queryStr =
+        "?Name=John%20Doe&IsVip=true&BirthDate=1990-04-20&Balance=150000.5&LoyaltyPoints=137"
+
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 1990-04-20, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
 
@@ -1347,25 +1428,31 @@ let ``BindModelAsync during HTTP GET request with query string returns correct r
 let ``BindModelAsync during HTTP GET request with culture aware query string returns correct result`` () =
     let ctx = Substitute.For<HttpContext>()
 
-    let outputCustomer (c : Customer) = text (c.ToString())
+    let outputCustomer (c: Customer) = text (c.ToString())
     let english = CultureInfo.CreateSpecificCulture("en-GB")
-    let app =
-        route "/auto"
-        |> HttpHandler.bindModel<Customer> (Some english) outputCustomer
 
-    let queryStr = "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
+    let app =
+        route "/auto" |> HttpHandler.bindModel<Customer> (Some english) outputCustomer
+
+    let queryStr =
+        "?Name=John%20Doe&IsVip=true&BirthDate=15/06/2013 06:00:00&Balance=150000.5&LoyaltyPoints=137"
+
     let query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery queryStr
-    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection) |> ignore
+
+    ctx.Request.Query.ReturnsForAnyArgs(QueryCollection(query) :> IQueryCollection)
+    |> ignore
+
     ctx.Request.Method.ReturnsForAnyArgs "GET" |> ignore
-    ctx.Request.Path.ReturnsForAnyArgs (PathString("/auto")) |> ignore
+    ctx.Request.Path.ReturnsForAnyArgs(PathString("/auto")) |> ignore
     ctx.Response.Body <- new MemoryStream()
 
-    let expected = "Name: John Doe, IsVip: true, BirthDate: 2013-06-15, Balance: 150000.50, LoyaltyPoints: 137"
+    let expected =
+        "Name: John Doe, IsVip: true, BirthDate: 2013-06-15, Balance: 150000.50, LoyaltyPoints: 137"
 
     task {
         let! result = app (Some >> Task.FromResult) ctx
 
         match result with
-        | None     -> assertFailf "Result was expected to be %s" expected
+        | None -> assertFailf "Result was expected to be %s" expected
         | Some ctx -> Assert.Equal(expected, getBody ctx)
     }
