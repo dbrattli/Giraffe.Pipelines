@@ -1,7 +1,10 @@
 namespace Giraffe
 
+open System
+open System.Collections.Generic
 open System.Globalization
 open Microsoft.AspNetCore.Http
+open Microsoft.Net.Http.Headers
 
 open Giraffe.ViewEngine.HtmlElements
 
@@ -514,12 +517,160 @@ module HttpHandler =
     /// <summary>
     /// Sends a response back to the client based on the request's Accept header.
     ///
+    /// If the Accept header cannot be matched with one of the supported mime types from the negotiationRules then the unacceptableHandler will be invoked.
+    /// </summary>
+    /// <param name="negotiationRules">A dictionary of mime types and response writing <see cref="HttpHandler" /> functions. Each mime type must be mapped to a function which accepts an obj and returns a <see cref="HttpHandler" /> which will send a response in the associated mime type (e.g.: dict [ "application/json", json; "application/xml" , xml ]).</param>
+    /// <param name="unacceptableHandler">A <see cref="HttpHandler" /> function which will be invoked if none of the accepted mime types can be satisfied. Generally this <see cref="HttpHandler" /> would send a response with a status code of 406 Unacceptable.</param>
+    /// <param name="responseObj">The object to send back to the client.</param>
+    /// <param name="source">The previous HTTP handler to compose.</param>
+    /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
+    let negotiateWith
+        (negotiationRules: IDictionary<string, obj -> HttpHandler>)
+        (unacceptableHandler: HttpHandler)
+        (responseObj: obj)
+        (source: HttpHandler)
+        : HttpHandler =
+        source >=> negotiateWith negotiationRules unacceptableHandler responseObj
+
+    /// <summary>
+    /// Sends a response back to the client based on the request's Accept header.
+    ///
     /// The negotiation rules as well as a <see cref="HttpHandler" /> for unacceptable requests can be configured in the ASP.NET Core startup code by registering a custom class of type <see cref="INegotiationConfig"/>.
     /// </summary>
     /// <param name="responseObj">The object to send back to the client.</param>
     /// <param name="source">The previous HTTP handler to compose.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let inline negotiate (responseObj: obj) (source: HttpHandler) : HttpHandler = source >=> negotiate responseObj
+
+
+    /// <summary>
+    /// Validates the following conditional HTTP headers of the request:
+    ///
+    /// If-Match
+    ///
+    /// If-None-Match
+    ///
+    /// If-Modified-Since
+    ///
+    /// If-Unmodified-Since
+    ///
+    ///
+    /// If the conditions are met (or non existent) then it will invoke the next http handler in the pipeline otherwise it will return a 304 Not Modified or 412 Precondition Failed response.
+    /// </summary>
+    /// <param name="eTag">Optional ETag. You can use the static EntityTagHeaderValue.FromString helper method to generate a valid <see cref="EntityTagHeaderValue"/> object.</param>
+    /// <param name="lastModified">Optional <see cref="System.DateTimeOffset"/> object denoting the last modified date.</param>
+    /// <param name="source">The previous HTTP handler to compose.</param>
+    /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
+    let validatePreconditions
+        (eTag: EntityTagHeaderValue option)
+        (lastModified: DateTimeOffset option)
+        (source: HttpHandler)
+        : HttpHandler =
+        source >=> validatePreconditions eTag lastModified
+
+    /// <summary>
+    /// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 1xx responses.
+    /// </summary>
+    module Intermediate =
+        let CONTINUE (source: HttpHandler) : HttpHandler =
+            source |> setStatusCode 100 |> setBody [||]
+
+        let SWITCHING_PROTO (source: HttpHandler) : HttpHandler =
+            source |> setStatusCode 101 |> setBody [||]
+
+    /// <summary>
+    /// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 2xx responses.
+    /// </summary>
+    module Successful =
+        let ok x = setStatusCode 200 >> x
+        let OK x = ok (negotiate x)
+
+        let created x = setStatusCode 201 >> x
+        let CREATED x = created (negotiate x)
+
+        let accepted x = setStatusCode 202 >> x
+        let ACCEPTED x = accepted (negotiate x)
+
+        let NO_CONTENT (source: HttpHandler) : HttpHandler = source |> setStatusCode 204
+
+    /// <summary>
+    /// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 4xx responses.
+    /// </summary>
+    module RequestErrors =
+        let badRequest x = setStatusCode 400 >> x
+        let BAD_REQUEST x = badRequest (negotiate x)
+
+        /// <summary>
+        /// Sends a 401 Unauthorized HTTP status code response back to the client.
+        ///
+        /// Use the unauthorized status code handler when a user could not be authenticated by the server (either missing or wrong authentication data). By returning a 401 Unauthorized HTTP response the server tells the client that it must know who is making the request before it can return a successful response. As such the server must also include which authentication scheme the client must use in order to successfully authenticate.
+        /// </summary>
+        /// <remarks>
+        /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
+        /// http://stackoverflow.com/questions/3297048/403-forbidden-vs-401-unauthorized-http-responses/12675357
+        ///
+        /// List of authentication schemes:
+        ///
+        /// https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication#Authentication_schemes
+        /// </remarks>
+        let unauthorized scheme realm x =
+            Core.setStatusCode 401
+            |> setHttpHeader "WWW-Authenticate" (sprintf "%s realm=\"%s\"" scheme realm)
+            |> x
+
+        let UNAUTHORIZED scheme realm x = unauthorized scheme realm (negotiate x)
+
+        let forbidden x = setStatusCode 403 >> x
+        let FORBIDDEN x = forbidden (negotiate x)
+
+        let notFound x = setStatusCode 404 >> x
+        let NOT_FOUND x = notFound (negotiate x)
+
+        let methodNotAllowed x = setStatusCode 405 >> x
+        let METHOD_NOT_ALLOWED x = methodNotAllowed (negotiate x)
+
+        let notAcceptable x = setStatusCode 406 >> x
+        let NOT_ACCEPTABLE x = notAcceptable (negotiate x)
+
+        let conflict x = setStatusCode 409 >> x
+        let CONFLICT x = conflict (negotiate x)
+
+        let gone x = setStatusCode 410 >> x
+        let GONE x = gone (negotiate x)
+
+        let unsupportedMediaType x = setStatusCode 415 >> x
+        let UNSUPPORTED_MEDIA_TYPE x = unsupportedMediaType (negotiate x)
+
+        let unprocessableEntity x = setStatusCode 422 >> x
+        let UNPROCESSABLE_ENTITY x = unprocessableEntity (negotiate x)
+
+        let preconditionRequired x = setStatusCode 428 >> x
+        let PRECONDITION_REQUIRED x = preconditionRequired (negotiate x)
+
+        let tooManyRequests x = setStatusCode 429 >> x
+        let TOO_MANY_REQUESTS x = tooManyRequests (negotiate x)
+
+
+    /// <summary>
+    /// A collection of <see cref="HttpHandler" /> functions to return HTTP status code 5xx responses.
+    /// </summary>
+    module ServerErrors =
+        let internalError x = setStatusCode 500 >> x
+        let INTERNAL_ERROR x = internalError (negotiate x)
+
+        let notImplemented x = setStatusCode 501 >> x
+        let NOT_IMPLEMENTED x = notImplemented (negotiate x)
+
+        let badGateway x = setStatusCode 502 >> x
+        let BAD_GATEWAY x = badGateway (negotiate x)
+
+        let serviceUnavailable x = setStatusCode 503 >> x
+        let SERVICE_UNAVAILABLE x = serviceUnavailable (negotiate x)
+
+        let gatewayTimeout x = setStatusCode 504 >> x
+        let GATEWAY_TIMEOUT x = gatewayTimeout (negotiate x)
+
+        let invalidHttpVersion x = setStatusCode 505 >> x
 
 [<AutoOpen>]
 module HttpHandlerExtensions =
