@@ -247,8 +247,30 @@ module HttpHandler =
     /// <param name="source">The previous HTTP handler to compose.</param>
     /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let inline xml (dataObj: obj) (source: HttpHandler) : HttpHandler = source >=> xml dataObj
+
+    /// <summary>
+    /// Reads a HTML file from disk and writes its contents to the body of the HTTP response.
+    /// It also sets the HTTP header Content-Type to text/html and sets the Content-Length header accordingly.
+    /// </summary>
+    /// <param name="filePath">A relative or absolute file path to the HTML file.</param>
+    /// <param name="source">The previous HTTP handler to compose.</param>
+    /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let inline htmlFile (filePath: string) (source: HttpHandler) : HttpHandler = source >=> htmlFile filePath
+
+    /// <summary>
+    /// Writes a HTML string to the body of the HTTP response.
+    /// It also sets the HTTP header Content-Type to text/html and sets the Content-Length header accordingly.
+    /// </summary>
+    /// <param name="html">The HTML string to be send back to the client.</param>
+    /// <returns>A Giraffe <see cref="HttpHandler" /> function which can be composed into a bigger web application.</returns>
     let inline htmlString (html: string) (source: HttpHandler) : HttpHandler = source >=> htmlString html
+
+    /// <summary>
+    /// <para>Compiles a `Giraffe.GiraffeViewEngine.XmlNode` object to a HTML view and writes the output to the body of the HTTP response.</para>
+    /// <para>It also sets the HTTP header `Content-Type` to `text/html` and sets the `Content-Length` header accordingly.</para>
+    /// </summary>
+    /// <param name="htmlView">An `XmlNode` object to be send back to the client and which represents a valid HTML view.</param>
+    /// <returns>A Giraffe `HttpHandler` function which can be composed into a bigger web application.</returns>
     let inline htmlView (htmlView: XmlNode) (source: HttpHandler) : HttpHandler = source >=> Core.htmlView htmlView
 
     // Routing
