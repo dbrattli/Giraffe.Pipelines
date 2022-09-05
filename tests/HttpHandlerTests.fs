@@ -7,8 +7,10 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Primitives
 open Xunit
 open NSubstitute
+
 open Giraffe
 open Giraffe.ViewEngine
+open Giraffe.Pipelines
 
 // ---------------------------------
 // Test Types
