@@ -33,6 +33,13 @@ syntax.
 
 ## Usage
 
+To enable pipelining you first you need to open the `Giraffe.Pipelines`
+namespace in your file.
+
+```fs
+open Giraffe.Pipelines
+```
+
 Pipelines are started using the normal Giraffe pipeline syntax e.g.
 `route "/ping"`. You can think of the standard Giraffe HTTP handlers
 as the create methods for a pipeline.
@@ -83,7 +90,9 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+
 open Giraffe
+open Giraffe.Pipelines
 
 let webApp =
     choose [

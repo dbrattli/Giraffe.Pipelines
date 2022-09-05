@@ -6,7 +6,9 @@ open System.Collections.Generic
 open Microsoft.AspNetCore.Http
 open Xunit
 open NSubstitute
+
 open Giraffe
+open Giraffe.Pipelines
 
 // ---------------------------------
 // route Tests

@@ -1,4 +1,4 @@
-namespace Giraffe
+namespace Giraffe.Pipelines
 
 open System
 open System.Collections.Generic
@@ -6,8 +6,10 @@ open System.Globalization
 open Microsoft.AspNetCore.Http
 open Microsoft.Net.Http.Headers
 
+open Giraffe
 open Giraffe.ViewEngine.HtmlElements
 
+/// This module uses `>=>` so you don't have to.
 [<RequireQualifiedAccess>]
 module HttpHandler =
     // Core handlers
